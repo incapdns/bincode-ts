@@ -406,8 +406,6 @@ export const decode = <T>(type: T, buffer: ArrayBuffer, offset = 0, config: Binc
             value = getI128(view, offset, littleEndian) as Value<T>
             offset += 16;
             break
-        
-        // --- INÍCIO DA CORREÇÃO DE DECODE ---
         case "f16":
             if (isVariantIntEncoding) {
                 const { value: rawU16, offset: newOffset } = decodeVariantInt(offset, view, u16);
@@ -447,8 +445,6 @@ export const decode = <T>(type: T, buffer: ArrayBuffer, offset = 0, config: Binc
                 offset += 8;
             }
             break
-        // --- FIM DA CORREÇÃO DE DECODE ---
-
         case "bool":
             value = (view.getUint8(offset) === 1) as Value<T>
             offset += 1;
@@ -737,8 +733,6 @@ export const encode = <T>(type: T, value: Value<T>, buffer: ArrayBuffer, offset:
             offset += 16;
             break
         }
-
-        // --- INÍCIO DA CORREÇÃO DE ENCODE ---
         case "f16": {
             if (isVariantIntEncoding) {
                 const tempBuffer = new ArrayBuffer(2);
@@ -778,8 +772,6 @@ export const encode = <T>(type: T, value: Value<T>, buffer: ArrayBuffer, offset:
             }
             break
         }
-        // --- FIM DA CORREÇÃO DE ENCODE ---
-
         // case "f128": {
         //     throw new BincodeError('Unimplemented', 'f128 encoding is not implemented yet');
         // }
