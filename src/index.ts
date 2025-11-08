@@ -52,8 +52,7 @@ export type IntType = UnsignedIntType | SignedIntType
 export type SignedIntType = TypeKindMarker<`i${IntBitSize}`>
 export type UnsignedIntType = TypeKindMarker<`u${IntBitSize}`>
 export type Never = TypeKindMarker<'never'>;
-/* 
-    primitives
+/* primitives
 */
 export type u8 = TypeKindMarker<'u8'>;
 export const u8: u8 = TypeKindMarker('u8');
@@ -121,8 +120,7 @@ export const expr: {
     }
 /**
  * Creates an enum variant with a specific expression value.
- * 
- * @param expr - The expression value for the variant.
+ * * @param expr - The expression value for the variant.
  * @param type - The type of the variant, defaults to Unit if not provided.
  */
 export const Variant = expr
@@ -408,18 +406,49 @@ export const decode = <T>(type: T, buffer: ArrayBuffer, offset = 0, config: Binc
             value = getI128(view, offset, littleEndian) as Value<T>
             offset += 16;
             break
+        
+        // --- INÍCIO DA CORREÇÃO DE DECODE ---
         case "f16":
-            value = view.getFloat16(offset, littleEndian) as Value<T>
-            offset += 2;
+            if (isVariantIntEncoding) {
+                const { value: rawU16, offset: newOffset } = decodeVariantInt(offset, view, u16);
+                offset = newOffset;
+                const tempBuffer = new ArrayBuffer(2);
+                const tempView = new DataView(tempBuffer);
+                tempView.setUint16(0, Number(rawU16), littleEndian);
+                value = tempView.getFloat16(0, littleEndian) as Value<T>;
+            } else {
+                value = view.getFloat16(offset, littleEndian) as Value<T>;
+                offset += 2;
+            }
             break
         case "f32":
-            value = view.getFloat32(offset, littleEndian) as Value<T>
-            offset += 4;
+            if (isVariantIntEncoding) {
+                const { value: rawU32, offset: newOffset } = decodeVariantInt(offset, view, u32);
+                offset = newOffset;
+                const tempBuffer = new ArrayBuffer(4);
+                const tempView = new DataView(tempBuffer);
+                tempView.setUint32(0, Number(rawU32), littleEndian);
+                value = tempView.getFloat32(0, littleEndian) as Value<T>;
+            } else {
+                value = view.getFloat32(offset, littleEndian) as Value<T>;
+                offset += 4;
+            }
             break
         case "f64":
-            value = view.getFloat64(offset, littleEndian) as Value<T>
-            offset += 8;
+            if (isVariantIntEncoding) {
+                const { value: rawU64, offset: newOffset } = decodeVariantInt(offset, view, u64);
+                offset = newOffset;
+                const tempBuffer = new ArrayBuffer(8);
+                const tempView = new DataView(tempBuffer);
+                tempView.setBigUint64(0, BigInt(rawU64), littleEndian);
+                value = tempView.getFloat64(0, littleEndian) as Value<T>;
+            } else {
+                value = view.getFloat64(offset, littleEndian) as Value<T>;
+                offset += 8;
+            }
             break
+        // --- FIM DA CORREÇÃO DE DECODE ---
+
         case "bool":
             value = (view.getUint8(offset) === 1) as Value<T>
             offset += 1;
@@ -708,21 +737,49 @@ export const encode = <T>(type: T, value: Value<T>, buffer: ArrayBuffer, offset:
             offset += 16;
             break
         }
+
+        // --- INÍCIO DA CORREÇÃO DE ENCODE ---
         case "f16": {
-            dataView.setFloat16(offset, value as number, isLittleEndian);
-            offset += 2;
+            if (isVariantIntEncoding) {
+                const tempBuffer = new ArrayBuffer(2);
+                const tempView = new DataView(tempBuffer);
+                tempView.setFloat16(0, value as number, isLittleEndian);
+                const rawU16 = tempView.getUint16(0, isLittleEndian);
+                offset = variantIntEncoding(rawU16, dataView, offset, u16);
+            } else {
+                dataView.setFloat16(offset, value as number, isLittleEndian);
+                offset += 2;
+            }
             break
         }
         case "f32": {
-            dataView.setFloat32(offset, value as number, isLittleEndian);
-            offset += 4;
+            if (isVariantIntEncoding) {
+                const tempBuffer = new ArrayBuffer(4);
+                const tempView = new DataView(tempBuffer);
+                tempView.setFloat32(0, value as number, isLittleEndian);
+                const rawU32 = tempView.getUint32(0, isLittleEndian);
+                offset = variantIntEncoding(rawU32, dataView, offset, u32);
+            } else {
+                dataView.setFloat32(offset, value as number, isLittleEndian);
+                offset += 4;
+            }
             break
         }
         case "f64": {
-            dataView.setFloat64(offset, value as number, isLittleEndian);
-            offset += 8;
+            if (isVariantIntEncoding) {
+                const tempBuffer = new ArrayBuffer(8);
+                const tempView = new DataView(tempBuffer);
+                tempView.setFloat64(0, value as number, isLittleEndian);
+                const rawU64 = tempView.getBigUint64(0, isLittleEndian);
+                offset = variantIntEncoding(rawU64, dataView, offset, u64);
+            } else {
+                dataView.setFloat64(offset, value as number, isLittleEndian);
+                offset += 8;
+            }
             break
         }
+        // --- FIM DA CORREÇÃO DE ENCODE ---
+
         // case "f128": {
         //     throw new BincodeError('Unimplemented', 'f128 encoding is not implemented yet');
         // }
