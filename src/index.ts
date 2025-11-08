@@ -717,7 +717,6 @@ export const encode = <T>(type: T, value: Value<T>, buffer: ArrayBuffer, offset:
             offset += 16;
             break
         }
-
         case "f16": {
             if (isVariantIntEncoding) {
                 const tempBuffer = new ArrayBuffer(2);
