@@ -444,15 +444,9 @@ export const decode = <T>(type: T, buffer: ArrayBuffer, offset = 0, config: Binc
                     byteLength = Number(view.getBigUint64(offset, littleEndian));
                     offset += 8;
                 }
-                try {
-                    const decoder = new TextDecoder();
-                    value = decoder.decode(new Uint8Array(buffer, offset, Number(byteLength))) as Value<T>
-                    offset += byteLength;
-                } catch (err) {
-                    console.error(err)
-                    debugger;
-                    throw err;
-                }
+                const decoder = new TextDecoder();
+                value = decoder.decode(new Uint8Array(buffer, offset, Number(byteLength))) as Value<T>
+                offset += byteLength;
             }
             break
         case "collection":
