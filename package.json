@@ -70,10 +70,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/incapdns/bincode-ts.git"
+    "url": "git+https://github.com/4t145/bincode-ts.git"
   },
   "bugs": {
-    "url": "https://github.com/incapdns/bincode-ts/issues"
+    "url": "https://github.com/4t145/bincode-ts/issues"
   },
-  "homepage": "https://github.com/incapdns/bincode-ts#readme"
+  "homepage": "https://github.com/4t145/bincode-ts#readme"
 }
