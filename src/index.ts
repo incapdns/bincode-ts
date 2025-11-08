@@ -741,7 +741,6 @@ export const encode = <T>(type: T, value: Value<T>, buffer: ArrayBuffer, offset:
             offset += 8;
             break
         }
-
         // case "f128": {
         //     throw new BincodeError('Unimplemented', 'f128 encoding is not implemented yet');
         // }
