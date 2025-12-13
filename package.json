@@ -34,7 +34,8 @@
     "examples:enums": "ts-node examples/enums.ts",
     "examples:complex": "ts-node examples/complex-structures.ts",
     "examples:custom": "ts-node examples/custom-types.ts",
-    "prepublishOnly": "npm run build && npm test"
+    "prepublishOnly": "npm run build && npm test",
+    "prepare": "npm run build"
   },
   "keywords": [
     "typescript",
