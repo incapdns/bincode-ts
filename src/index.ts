@@ -325,16 +325,16 @@ export const decode = <T>(type: T, buffer: ArrayBuffer, offset = 0, len = buffer
         if (flag <= U8_MAX) {
             zigzagInt = flag;
         } else if (flag === U16_FLAG) {
-            zigzagInt = view.getUint16(0, littleEndian);
+            zigzagInt = view.getUint16(1, littleEndian);
             size += 2;
         } else if (flag === U32_FLAG) {
-            zigzagInt = view.getUint32(0, littleEndian);
+            zigzagInt = view.getUint32(1, littleEndian);
             size += 4;
         } else if (flag === U64_FLAG) {
-            zigzagInt = view.getBigUint64(0, littleEndian);
+            zigzagInt = view.getBigUint64(1, littleEndian);
             size += 8;
         } else if (flag === U128_FLAG) {
-            zigzagInt = getU128(view, 0, littleEndian);
+            zigzagInt = getU128(view, 1, littleEndian);
             size += 16;
         } else {
             throw new BincodeError('BigintOutOfRange', `Invalid int encoding flag: ${flag}`);
