@@ -410,7 +410,7 @@ export const decode = <T>(type: T, buffer: ArrayBuffer, offset = 0, len = buffer
         case "f16":
             if (isVariantIntEncoding) {
                 const { value: rawU16, offset: newOffset } = decodeVariantInt(offset, view, u16);
-                offset = newOffset;
+                offset += newOffset;
                 const tempBuffer = new ArrayBuffer(2);
                 const tempView = new DataView(tempBuffer);
                 tempView.setUint16(0, Number(rawU16), littleEndian);
@@ -438,7 +438,7 @@ export const decode = <T>(type: T, buffer: ArrayBuffer, offset = 0, len = buffer
                 let byteLength: number
                 if (isVariantIntEncoding) {
                     const { value, offset: newOffset } = decodeVariantInt(offset, view, u64);
-                    offset = newOffset;
+                    offset += newOffset;
                     byteLength = Number(value);
                 } else {
                     byteLength = Number(view.getBigUint64(offset, littleEndian));
@@ -454,7 +454,7 @@ export const decode = <T>(type: T, buffer: ArrayBuffer, offset = 0, len = buffer
                 let byteLength: number;
                 if (isVariantIntEncoding) {
                     const { value, offset: newOffset } = decodeVariantInt(offset, view, u64);
-                    offset = newOffset;
+                    offset += newOffset;
                     byteLength = Number(value);
                 } else {
                     byteLength = Number(view.getBigUint64(offset, littleEndian));
@@ -467,7 +467,7 @@ export const decode = <T>(type: T, buffer: ArrayBuffer, offset = 0, len = buffer
                         value: element,
                         offset: elementOffset
                     } = decode<unknown>(elementDefinition, buffer, offset, len, config);
-                    offset = elementOffset
+                    offset += elementOffset
                     collection.push(element)
                 }
                 value = collection as Value<T>
@@ -482,7 +482,7 @@ export const decode = <T>(type: T, buffer: ArrayBuffer, offset = 0, len = buffer
                         value: element,
                         offset: elementOffset
                     } = decode<unknown>(elementDefinition, buffer, offset, len, config);
-                    offset = elementOffset
+                    offset += elementOffset
                     tupleValue.push(element)
                 }
                 value = tupleValue as Value<T>
@@ -498,7 +498,7 @@ export const decode = <T>(type: T, buffer: ArrayBuffer, offset = 0, len = buffer
                         value: element,
                         offset: elementOffset
                     } = decode<unknown>(elementDefinition, buffer, offset, len, config);
-                    offset = elementOffset
+                    offset += elementOffset
                     tupleValue.push(element)
                 }
                 value = tupleValue as Value<T>
@@ -516,7 +516,7 @@ export const decode = <T>(type: T, buffer: ArrayBuffer, offset = 0, len = buffer
                             offset: fieldOffset
                         } = decode<unknown>(type, buffer, offset, len, config);
                         decodedObject[field] = fieldValue;
-                        offset = fieldOffset;
+                        offset += fieldOffset;
                     }
                 }
                 value = decodedObject as Value<T>
@@ -543,7 +543,7 @@ export const decode = <T>(type: T, buffer: ArrayBuffer, offset = 0, len = buffer
                 let variantIndex
                 if (isVariantIntEncoding) {
                     let result = decodeVariantInt(offset, view, u32)
-                    offset = result.offset;
+                    offset += result.offset;
                     variantIndex = Number(result.value);
                 } else {
                     variantIndex = view.getUint32(offset, littleEndian);
@@ -555,7 +555,7 @@ export const decode = <T>(type: T, buffer: ArrayBuffer, offset = 0, len = buffer
                 const [variantType, variant] = indexedDefinition[variantIndex];
                 if (variantType !== null) {
                     const { value: variantValue, offset: variantOffset } = decode<unknown>(variantType, buffer, offset, len, config);
-                    offset = variantOffset;
+                    offset += variantOffset;
                     value = EnumVariantValue(variant, variantValue) as Value<T>
                 } else {
                     value = EnumVariantValue(variant) as Value<T>
@@ -586,7 +586,7 @@ export const decode = <T>(type: T, buffer: ArrayBuffer, offset = 0, len = buffer
                 const customType = type as CustomType<unknown, string>;
                 const { value: customValue, offset: customOffset } = customType.decode(buffer, offset, len, config);
                 value = customValue as Value<T>;
-                offset = customOffset;
+                offset += customOffset;
             }
             break
     }
