@@ -8,6 +8,7 @@
   "type": "module",
   "files": [
     "dist",
+    "tsconfig.json",
     "README.md",
     "LICENSE"
   ],
