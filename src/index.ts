@@ -465,9 +465,9 @@ export const decode = <T>(type: T, buffer: ArrayBuffer, offset = 0, len = buffer
                 for (let index = 0; index < byteLength; index += 1) {
                     const {
                         value: element,
-                        offset: elementOffset
+                        offset: newOffset
                     } = decode<unknown>(elementDefinition, buffer, offset, len, config);
-                    offset += elementOffset
+                    offset = newOffset
                     collection.push(element)
                 }
                 value = collection as Value<T>
@@ -480,9 +480,9 @@ export const decode = <T>(type: T, buffer: ArrayBuffer, offset = 0, len = buffer
                 for (const elementDefinition of tupleDefinition) {
                     const {
                         value: element,
-                        offset: elementOffset
+                        offset: newOffset
                     } = decode<unknown>(elementDefinition, buffer, offset, len, config);
-                    offset += elementOffset
+                    offset = newOffset
                     tupleValue.push(element)
                 }
                 value = tupleValue as Value<T>
@@ -496,9 +496,9 @@ export const decode = <T>(type: T, buffer: ArrayBuffer, offset = 0, len = buffer
                 for (let index = 0; index < arrayDefinition.size; index += 1) {
                     const {
                         value: element,
-                        offset: elementOffset
+                        offset: newOffset
                     } = decode<unknown>(elementDefinition, buffer, offset, len, config);
-                    offset += elementOffset
+                    offset = newOffset
                     tupleValue.push(element)
                 }
                 value = tupleValue as Value<T>
@@ -513,10 +513,10 @@ export const decode = <T>(type: T, buffer: ArrayBuffer, offset = 0, len = buffer
                         const type = structDefinition[field];
                         const {
                             value: fieldValue,
-                            offset: fieldOffset
+                            offset: newOffset
                         } = decode<unknown>(type, buffer, offset, len, config);
                         decodedObject[field] = fieldValue;
-                        offset += fieldOffset;
+                        offset = newOffset;
                     }
                 }
                 value = decodedObject as Value<T>
@@ -554,8 +554,8 @@ export const decode = <T>(type: T, buffer: ArrayBuffer, offset = 0, len = buffer
                 }
                 const [variantType, variant] = indexedDefinition[variantIndex];
                 if (variantType !== null) {
-                    const { value: variantValue, offset: variantOffset } = decode<unknown>(variantType, buffer, offset, len, config);
-                    offset += variantOffset;
+                    const { value: variantValue, offset: newOffset } = decode<unknown>(variantType, buffer, offset, len, config);
+                    offset = newOffset;
                     value = EnumVariantValue(variant, variantValue) as Value<T>
                 } else {
                     value = EnumVariantValue(variant) as Value<T>
