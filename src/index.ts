@@ -317,25 +317,25 @@ export const decode = <T>(type: T, buffer: ArrayBuffer, offset = 0, len = buffer
     const isVariantIntEncoding = config.intEncoding === 'variant';
     function decodeVariantInt(view: DataView, type: IntType): {
         value: number | bigint,
-        offset: number
+        size: number
     } {
         let flag = view.getUint8(0);
-        let offset = 1;
+        let size = 1;
         let zigzagInt: number | bigint;
         if (flag <= U8_MAX) {
             zigzagInt = flag;
         } else if (flag === U16_FLAG) {
             zigzagInt = view.getUint16(0, littleEndian);
-            offset += 2;
+            size += 2;
         } else if (flag === U32_FLAG) {
             zigzagInt = view.getUint32(0, littleEndian);
-            offset += 4;
+            size += 4;
         } else if (flag === U64_FLAG) {
             zigzagInt = view.getBigUint64(0, littleEndian);
-            offset += 8;
+            size += 8;
         } else if (flag === U128_FLAG) {
             zigzagInt = getU128(view, 0, littleEndian);
-            offset += 16;
+            size += 16;
         } else {
             throw new BincodeError('BigintOutOfRange', `Invalid int encoding flag: ${flag}`);
         }
@@ -350,7 +350,7 @@ export const decode = <T>(type: T, buffer: ArrayBuffer, offset = 0, len = buffer
         }
         return {
             value,
-            offset
+            size
         };
     }
     let value: Value<T> = undefined as Value<T>;
@@ -358,12 +358,11 @@ export const decode = <T>(type: T, buffer: ArrayBuffer, offset = 0, len = buffer
         throw new BincodeError('InvalidType', `Expected a valid type definition, but got ${type}`);
     }
     if (isVariantIntEncoding && isInt(type) && type[TYPE_KIND] !== 'u8' && type[TYPE_KIND] !== 'i8') {
-        const result = decodeVariantInt(view, type) as {
-            value: Value<T>
-            offset: number
+        const result = decodeVariantInt(view, type);
+        return {
+            value: result.value as Value<T>,
+            offset: result.size + offset
         };
-        result.offset += offset;
-        return result;
     }
     switch (type[TYPE_KIND]) {
         case "never":
@@ -411,8 +410,8 @@ export const decode = <T>(type: T, buffer: ArrayBuffer, offset = 0, len = buffer
 
         case "f16":
             if (isVariantIntEncoding) {
-                const { value: rawU16, offset: newOffset } = decodeVariantInt(view, u16);
-                offset += newOffset;
+                const { value: rawU16, size } = decodeVariantInt(view, u16);
+                offset += size;
                 const tempBuffer = new ArrayBuffer(2);
                 const tempView = new DataView(tempBuffer);
                 tempView.setUint16(0, Number(rawU16), littleEndian);
@@ -439,8 +438,8 @@ export const decode = <T>(type: T, buffer: ArrayBuffer, offset = 0, len = buffer
             {
                 let byteLength: number
                 if (isVariantIntEncoding) {
-                    const { value, offset: newOffset } = decodeVariantInt(view, u64);
-                    offset += newOffset;
+                    const { value, size } = decodeVariantInt(view, u64);
+                    offset += size;
                     byteLength = Number(value);
                 } else {
                     byteLength = Number(view.getBigUint64(0, littleEndian));
@@ -455,8 +454,8 @@ export const decode = <T>(type: T, buffer: ArrayBuffer, offset = 0, len = buffer
             {
                 let byteLength: number;
                 if (isVariantIntEncoding) {
-                    const { value, offset: newOffset } = decodeVariantInt(view, u64);
-                    offset += newOffset;
+                    const { value, size } = decodeVariantInt(view, u64);
+                    offset += size;
                     byteLength = Number(value);
                 } else {
                     byteLength = Number(view.getBigUint64(0, littleEndian));
@@ -545,7 +544,7 @@ export const decode = <T>(type: T, buffer: ArrayBuffer, offset = 0, len = buffer
                 let variantIndex
                 if (isVariantIntEncoding) {
                     let result = decodeVariantInt(view, u32)
-                    offset += result.offset;
+                    offset += result.size;
                     variantIndex = Number(result.value);
                 } else {
                     variantIndex = view.getUint32(0, littleEndian);
