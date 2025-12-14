@@ -312,7 +312,7 @@ export const decode = <T>(type: T, buffer: ArrayBuffer, offset = 0, len = buffer
     if (config.limit !== undefined && offset >= config.limit) {
         throw new BincodeError('OverflowLimit', `Buffer overflow at offset ${offset}, limit is ${config.limit}`);
     }
-    let view = new DataView(buffer, offset, len);
+    let view = new DataView(buffer, offset, len - offset);
     const littleEndian = config.endian === 'little';
     const isVariantIntEncoding = config.intEncoding === 'variant';
     function decodeVariantInt(offset: number, view: DataView, type: IntType): {
