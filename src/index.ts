@@ -18,7 +18,7 @@ export type CustomType<Value, TypeName extends string> = {
     [TYPE_KIND]: 'custom',
     type: TypeName,
     encode(buffer: ArrayBuffer, value: Value, offset: number, config: BincodeConfig): number,
-    decode(bufferLike: Uint8Array, offset: number, config: BincodeConfig): {
+    decode(buffer: ArrayBuffer, offset: number, config: BincodeConfig): {
         value: Value,
         offset: number
     }
@@ -305,14 +305,14 @@ const U128_FLAG = 254;
 const U128_MIN = -0x8000_0000_0000_0000_0000_0000_0000_0000n;
 const U128_MAX = 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffffn;
 export const array = <T, N extends number>(...element: T[] & { readonly length: N }): T[] & { readonly length: N } => element
-export const decode = <T>(type: T, bufferLike: Uint8Array, offset = 0, config: BincodeConfig = BincodeConfig.STANDARD): {
+export const decode = <T>(type: T, buffer: ArrayBuffer, offset = 0, config: BincodeConfig = BincodeConfig.STANDARD): {
     value: Value<T>
     offset: number
 } => {
     if (config.limit !== undefined && offset >= config.limit) {
         throw new BincodeError('OverflowLimit', `Buffer overflow at offset ${offset}, limit is ${config.limit}`);
     }
-    let view = new DataView(bufferLike.buffer, bufferLike.byteOffset, bufferLike.byteLength);
+    let view = new DataView(buffer);
     const littleEndian = config.endian === 'little';
     const isVariantIntEncoding = config.intEncoding === 'variant';
     function decodeVariantInt(offset: number, view: DataView, type: IntType): {
@@ -445,7 +445,7 @@ export const decode = <T>(type: T, bufferLike: Uint8Array, offset = 0, config: B
                     offset += 8;
                 }
                 const decoder = new TextDecoder();
-                value = decoder.decode(new Uint8Array(bufferLike.buffer, bufferLike.byteOffset + offset, Number(byteLength))) as Value<T>
+                value = decoder.decode(new Uint8Array(buffer, offset, Number(byteLength))) as Value<T>
                 offset += byteLength;
             }
             break
@@ -466,7 +466,7 @@ export const decode = <T>(type: T, bufferLike: Uint8Array, offset = 0, config: B
                     const {
                         value: element,
                         offset: elementOffset
-                    } = decode<unknown>(elementDefinition, bufferLike, offset, config);
+                    } = decode<unknown>(elementDefinition, buffer, offset, config);
                     offset = elementOffset
                     collection.push(element)
                 }
@@ -481,7 +481,7 @@ export const decode = <T>(type: T, bufferLike: Uint8Array, offset = 0, config: B
                     const {
                         value: element,
                         offset: elementOffset
-                    } = decode<unknown>(elementDefinition, bufferLike, offset, config);
+                    } = decode<unknown>(elementDefinition, buffer, offset, config);
                     offset = elementOffset
                     tupleValue.push(element)
                 }
@@ -497,7 +497,7 @@ export const decode = <T>(type: T, bufferLike: Uint8Array, offset = 0, config: B
                     const {
                         value: element,
                         offset: elementOffset
-                    } = decode<unknown>(elementDefinition, bufferLike, offset, config);
+                    } = decode<unknown>(elementDefinition, buffer, offset, config);
                     offset = elementOffset
                     tupleValue.push(element)
                 }
@@ -514,7 +514,7 @@ export const decode = <T>(type: T, bufferLike: Uint8Array, offset = 0, config: B
                         const {
                             value: fieldValue,
                             offset: fieldOffset
-                        } = decode<unknown>(type, bufferLike, offset, config);
+                        } = decode<unknown>(type, buffer, offset, config);
                         decodedObject[field] = fieldValue;
                         offset = fieldOffset;
                     }
@@ -554,7 +554,7 @@ export const decode = <T>(type: T, bufferLike: Uint8Array, offset = 0, config: B
                 }
                 const [variantType, variant] = indexedDefinition[variantIndex];
                 if (variantType !== null) {
-                    const { value: variantValue, offset: variantOffset } = decode<unknown>(variantType, bufferLike, offset, config);
+                    const { value: variantValue, offset: variantOffset } = decode<unknown>(variantType, buffer, offset, config);
                     offset = variantOffset;
                     value = EnumVariantValue(variant, variantValue) as Value<T>
                 } else {
@@ -573,7 +573,7 @@ export const decode = <T>(type: T, bufferLike: Uint8Array, offset = 0, config: B
                         offset
                     }
                 } else if (variantFlag === 1) {
-                    return decode<unknown>(optionDefinition.optionType, bufferLike, offset, config) as {
+                    return decode<unknown>(optionDefinition.optionType, buffer, offset, config) as {
                         value: Value<T>
                         offset: number
                     }
@@ -584,7 +584,7 @@ export const decode = <T>(type: T, bufferLike: Uint8Array, offset = 0, config: B
         case "custom":
             {
                 const customType = type as CustomType<unknown, string>;
-                const { value: customValue, offset: customOffset } = customType.decode(bufferLike, offset, config);
+                const { value: customValue, offset: customOffset } = customType.decode(buffer, offset, config);
                 value = customValue as Value<T>;
                 offset = customOffset;
             }
@@ -847,7 +847,7 @@ export abstract class CustomTypeClass<V, S extends string> implements CustomType
     readonly abstract type: S;
 
     abstract encode(buffer: ArrayBuffer, value: V, offset: number, config: BincodeConfig): number;
-    abstract decode(bufferLike: Uint8Array, offset: number, config: BincodeConfig): { value: V, offset: number };
+    abstract decode(buffer: ArrayBuffer, offset: number, config: BincodeConfig): { value: V, offset: number };
 }
 
 // test
