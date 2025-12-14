@@ -358,10 +358,12 @@ export const decode = <T>(type: T, buffer: ArrayBuffer, offset = 0, len = buffer
         throw new BincodeError('InvalidType', `Expected a valid type definition, but got ${type}`);
     }
     if (isVariantIntEncoding && isInt(type) && type[TYPE_KIND] !== 'u8' && type[TYPE_KIND] !== 'i8') {
-        return decodeVariantInt(view, type) as {
+        const result = decodeVariantInt(view, type) as {
             value: Value<T>
             offset: number
-        }
+        };
+        result.offset += offset;
+        return result;
     }
     switch (type[TYPE_KIND]) {
         case "never":
